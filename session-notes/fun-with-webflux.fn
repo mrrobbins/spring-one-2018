@@ -1,0 +1,53 @@
+# Fun with WebFlux.fn
+
+https://springoneplatform.io/2018/sessions/fun-with-the-functional-web-framework
+
+github.com/poutsma/fun-with-functional
+
+## Intro
+
+- Compatible with Spring 5.0+ and Spring Boot 2.0+
+- Design goals:
+  - Use functional style in Java 8
+  - More library, less framework
+  - Mix with annotation model
+  - Minimize/avoid reflection to speed up start time
+
+## Handler Function
+
+```Java
+public Mono<ServerResponse> showPeople(ServerRequest request) {
+ Flux<Person> allPeople = this.personRepository.findAll();
+ return ServerResponse.ok().body(allPeople, Person.class);
+}
+
+public Mono<ServerResponse> showPerson(ServerRequest request) {
+return this.personRepository.findById(request.pathVariable("id"))
+          .flatMap(person -> ServerResponse.ok().syncBody(person))
+          .switchIfEmpty(Mono.deferred(() -> ServerResponse.notFound().build()));
+
+          // Mono deferred prevent Java evaluation of the lambda until needed.
+}
+```
+
+Alternatively you can use annotation based with more flexible method params(e.g. get path variables)
+
+```java
+Mono<ResponseEntity<Person>> showPerson(@PathVariable String id);
+```
+
+How does a stream output look in the browser? That is, a client that doesn't expect a stream?
+
+Spring 5.1 - introduced builder style
+
+```Java
+return route().GET("/people/{id}", personHandler::showPerson})
+              .GET("/people", personHandler:showPeople)
+```
+
+- Programmatically combine function router vs annotation controller
+- Use good names and group different methods by type, etc.
+
+```java
+html.and(json)
+```
